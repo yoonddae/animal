@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./styles.css";
 
 function App() {
@@ -28,25 +28,80 @@ function App() {
 
   const [editIndex, setEditIndex] = useState(-1);
 
-  // 저장 / 수정
-  const handleSubmit = (e) => {
+  // GET
+  const fetchMessages = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:8080/messages"
+      );
+
+      const data = await response.json();
+
+      const messages = data.map(
+        (item) => item.message
+      );
+
+      setSentences(messages);
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // 처음 실행 시 메시지 불러오기
+useEffect(() => {
+  const loadMessages = async () => {
+    await fetchMessages();
+  };
+
+  loadMessages();
+}, []);
+
+  // 저장 / 수정 (POST)
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const sentence = input.trim();
 
     if (!sentence) return;
 
-    if (editIndex === -1) {
-      setSentences([...sentences, sentence]);
-    } else {
-      const updated = [...sentences];
-      updated[editIndex] = sentence;
-      setSentences(updated);
-      setEditIndex(-1);
-    }
+    try {
+      const response = await fetch(
+        "http://localhost:8080/messages",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: sentence,
+          }),
+        }
+      );
 
-    setBubble(sentence);
-    setInput("");
+      const data = await response.json();
+
+      if (editIndex === -1) {
+        setSentences([
+          ...sentences,
+          data.message,
+        ]);
+      } else {
+        const updated = [...sentences];
+
+        updated[editIndex] = data.message;
+
+        setSentences(updated);
+        setEditIndex(-1);
+      }
+
+      setBubble(data.message);
+      setInput("");
+
+    } catch (error) {
+      console.error(error);
+      alert("서버 연결 실패");
+    }
   };
 
   // 수정 버튼
@@ -55,14 +110,28 @@ function App() {
     setEditIndex(index);
   };
 
-  // 삭제 버튼
-  const deleteSentence = (index) => {
-    const updated = sentences.filter(
-      (_, i) => i !== index
-    );
+  // 삭제 버튼 (DELETE)
+  const deleteSentence = async (index) => {
+    try {
+      await fetch(
+        `http://localhost:8080/messages/${index + 1}`,
+        {
+          method: "DELETE",
+        }
+      );
 
-    setSentences(updated);
-    setEditIndex(-1);
+      const updated = sentences.filter(
+        (_, i) => i !== index
+      );
+
+      setSentences(updated);
+
+      setEditIndex(-1);
+
+    } catch (error) {
+      console.error(error);
+      alert("삭제 실패");
+    }
   };
 
   // 말하기 버튼
@@ -70,8 +139,11 @@ function App() {
     const lastSentence =
       sentences[sentences.length - 1];
 
-    setBubble(input.trim() || lastSentence || 
-      "먼저 문장을 입력해줘!");
+    setBubble(
+      input.trim() ||
+      lastSentence ||
+      "먼저 문장을 입력해줘!"
+    );
   };
 
   // 랜덤 동물 버튼
@@ -90,17 +162,13 @@ function App() {
           프-백 연합 프로젝트 : 서윤소래
         </p>
 
-        <br />
-
         <h1>
           귀요미들에게 말을 가르쳐보세요!
         </h1>
 
-        <br />
-
         <div className="direction">
           <p>
-            사용 방법. . . ✏️
+            사용 방법 ✏️
             <br />
             문장을 입력하고 말하기 버튼을
             누르면 동물이 똑같이 말해요.
@@ -172,6 +240,7 @@ function App() {
                   <span>{sentence}</span>
 
                   <button
+                    type="button"
                     onClick={() =>
                       editSentence(index)
                     }
@@ -180,6 +249,7 @@ function App() {
                   </button>
 
                   <button
+                    type="button"
                     className="delete"
                     onClick={() =>
                       deleteSentence(index)
