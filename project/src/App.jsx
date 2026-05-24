@@ -214,8 +214,9 @@ useEffect(() => {
           </button>
 
           <button
-            type="button"
-            onClick={randomAnimal}
+          type="button"
+          className="randomBtn"
+          onClick={randomAnimal}
           >
             🎲 랜덤 동물
           </button>
