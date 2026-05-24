@@ -144,12 +144,27 @@ button:active {
   gap: 10px;
 }
 
-#randomBtn {
+.bubble::before {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-top: 20px solid rgb(222, 245, 251);
+}
+
+
+.randomBtn {
   color: #2c2412;
   background: rgb(242, 242, 155);
 }
 
-#randomBtn:hover {
+.randomBtn:hover {
   background: rgb(245, 245, 95);
 }
 
